@@ -1,0 +1,112 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rock Paper Scissors</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fdf6ff;
+      color: #1e1e1e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      color: #6d28d9;
+    }
+    .choices, .results, .scores {
+      margin: 20px;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: #8b5cf6;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    button:hover {
+      transform: scale(1.1);
+    }
+    .result {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      color: #4c1d95;
+    }
+    .scores div {
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rock Paper Scissors</h1>
+  <div class="choices">
+    <button onclick="play('rock')">🪨 Rock</button>
+    <button onclick="play('paper')">📄 Paper</button>
+    <button onclick="play('scissors')">✂️ Scissors</button>
+  </div>
+  <div class="results">
+    <div><strong>You:</strong> <span id="playerChoice">-</span></div>
+    <div><strong>Opponent:</strong> <span id="opponentChoice">-</span></div>
+  </div>
+  <div class="scores">
+    <div><strong>Your Score:</strong> <span id="playerScore">0</span></div>
+    <div><strong>Opponent Score:</strong> <span id="opponentScore">0</span></div>
+  </div>
+  <div class="result" id="resultText">Make your move!</div>
+  <button onclick="restartGame()">🔄 Restart Game</button>  <script>
+    let playerScore = 0;
+    let opponentScore = 0;
+
+    function play(playerMove) {
+      const moves = ['rock', 'paper', 'scissors'];
+      const opponentMove = moves[Math.floor(Math.random() * 3)];
+
+      document.getElementById('playerChoice').textContent = emoji(playerMove);
+      document.getElementById('opponentChoice').textContent = emoji(opponentMove);
+
+      let result = '';
+      if (playerMove === opponentMove) {
+        result = "It's a draw!";
+      } else if (
+        (playerMove === 'rock' && opponentMove === 'scissors') ||
+        (playerMove === 'paper' && opponentMove === 'rock') ||
+        (playerMove === 'scissors' && opponentMove === 'paper')
+      ) {
+        result = 'You win! 🎉';
+        playerScore++;
+      } else {
+        result = 'You lose 😢';
+        opponentScore++;
+      }
+
+      document.getElementById('resultText').textContent = result;
+      document.getElementById('playerScore').textContent = playerScore;
+      document.getElementById('opponentScore').textContent = opponentScore;
+    }
+
+    function emoji(move) {
+      return move === 'rock' ? '🪨 Rock' : move === 'paper' ? '📄 Paper' : '✂️ Scissors';
+    }
+
+    function restartGame() {
+      playerScore = 0;
+      opponentScore = 0;
+      document.getElementById('playerChoice').textContent = '-';
+      document.getElementById('opponentChoice').textContent = '-';
+      document.getElementById('resultText').textContent = 'Make your move!';
+      document.getElementById('playerScore').textContent = '0';
+      document.getElementById('opponentScore').textContent = '0';
+    }
+  </script></body>
+</html>

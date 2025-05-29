@@ -1,0 +1,229 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sardhan Type Tester</title>
+<style>
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #e0f7fa, #e1bee7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  h1 {
+    margin-top: 20px;
+    color: #6a1b9a;
+  }
+  .container {
+    width: 90%;
+    max-width: 600px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    padding: 30px;
+    margin-top: 20px;
+  }
+  .sentence {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: #374151;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    user-select: none;
+    min-height: 80px;
+  }
+  textarea {
+    width: 100%;
+    height: 140px;
+    font-size: 1rem;
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    resize: vertical;
+    line-height: 1.4;
+  }
+  button {
+    margin-top: 15px;
+    padding: 10px 20px;
+    background-color: #7e22ce;
+    color: white;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  button:hover {
+    background-color: #5b21b6;
+  }
+  .result {
+    margin-top: 20px;
+    font-size: 1.1rem;
+    color: #1e40af;
+  }
+  .scores {
+    margin-top: 15px;
+    font-size: 1rem;
+    color: #2d3748;
+  }
+  .correct {
+    color: green;
+    font-weight: 600;
+  }
+  .incorrect {
+    color: red;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<h1>Sardhan Type Tester</h1>
+<div class="container">
+  <div class="sentence" id="sentence"></div>
+  <textarea id="input" placeholder="Start typing here..." oninput="startTest()" spellcheck="false"></textarea>
+  <button onclick="resetTest()">🔁 Try Another</button>
+  <button onclick="resetTopScores()" style="background:#b91c1c; margin-left:10px;">🗑️ Reset Top Scores</button>
+  <div class="result" id="result"></div>
+  <div class="scores" id="topScores"></div>
+</div>
+
+<script>
+  const sentences = [
+    `The quick brown fox jumps over the lazy dog.`,
+    `Typing is a skill that improves with practice over time.`,
+    `JavaScript makes websites interactive and dynamic, helping create amazing user experiences.`,
+    `A watched pot never boils, or so they say, but patience is a virtue.`,
+    `Practice makes perfect in everything you do, keep pushing forward.`,
+    `Focus on accuracy before increasing speed; mistakes slow you down.`,
+    `Every expert was once a beginner, keep learning and growing.`,
+    `Success comes to those who keep trying, never give up on your dreams.`,
+    `Don't let perfection stop your progress; aim for steady improvement.`,
+    `Believe in yourself and type with confidence, the rest will follow.`
+  ];
+
+  let currentSentence = "";
+  let startTime = null;
+  let timerStarted = false;
+
+  function getRandomSentence() {
+    return sentences[Math.floor(Math.random() * sentences.length)];
+  }
+
+  function loadNewSentence() {
+    currentSentence = getRandomSentence();
+    displaySentence('');
+    document.getElementById("input").value = "";
+    document.getElementById("result").textContent = "";
+    startTime = null;
+    timerStarted = false;
+  }
+
+  function displaySentence(userInput) {
+    let html = "";
+    for (let i = 0; i < currentSentence.length; i++) {
+      const char = currentSentence[i];
+      if (i < userInput.length) {
+        if (userInput[i] === char) {
+          html += `<span class="correct">${char}</span>`;
+        } else {
+          html += `<span class="incorrect">${char}</span>`;
+        }
+      } else {
+        html += char;
+      }
+    }
+    document.getElementById("sentence").innerHTML = html;
+  }
+
+  function calculateAccuracy(input, target) {
+    let correctChars = 0;
+    for (let i = 0; i < input.length; i++) {
+      if (input[i] === target[i]) correctChars++;
+    }
+    return ((correctChars / target.length) * 100) || 0;
+  }
+
+  function getTopScores() {
+    return {
+      wpm: parseFloat(localStorage.getItem('topWPM')) || 0,
+      accuracy: parseFloat(localStorage.getItem('topAccuracy')) || 0
+    };
+  }
+
+  function saveTopScores(wpm, accuracy) {
+    const topScores = getTopScores();
+    let updated = false;
+
+    if (wpm > topScores.wpm) {
+      localStorage.setItem('topWPM', wpm);
+      updated = true;
+    }
+    if (accuracy > topScores.accuracy) {
+      localStorage.setItem('topAccuracy', accuracy);
+      updated = true;
+    }
+    return updated;
+  }
+
+  function updateTopScoresDisplay() {
+    const topScores = getTopScores();
+    document.getElementById("topScores").textContent = 
+      `🏆 Top WPM: ${topScores.wpm} -- Top Accuracy: ${topScores.accuracy}%`;
+  }
+
+  function startTest() {
+    const input = document.getElementById("input").value;
+
+    if (!timerStarted && input.length > 0) {
+      startTime = new Date().getTime();
+      timerStarted = true;
+    }
+
+    displaySentence(input);
+
+    if (input.length >= currentSentence.length) {
+      const endTime = new Date().getTime();
+      const timeTaken = (endTime - startTime) / 1000; // seconds
+      const wordsTyped = input.trim().split(/\s+/).length;
+      const wpm = Math.round((wordsTyped / timeTaken) * 60);
+      const accuracy = calculateAccuracy(input, currentSentence).toFixed(2);
+
+      document.getElementById("result").textContent = 
+        `🎉 Completed in ${timeTaken.toFixed(2)}s -- WPM: ${wpm} -- Accuracy: ${accuracy}%`;
+
+      const updated = saveTopScores(wpm, parseFloat(accuracy));
+      if (updated) {
+        document.getElementById("result").textContent += " 🔥 New Record!";
+      }
+      updateTopScoresDisplay();
+
+      timerStarted = false;
+    } else {
+      document.getElementById("result").textContent = "";
+    }
+  }
+
+  function resetTest() {
+    loadNewSentence();
+  }
+
+  function resetTopScores() {
+    localStorage.removeItem('topWPM');
+    localStorage.removeItem('topAccuracy');
+    updateTopScoresDisplay();
+  }
+
+  // On page load show top scores if any
+  updateTopScoresDisplay();
+  loadNewSentence();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,99 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html><html lang="en"><head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modern Resume Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .editable:focus {
+      outline: 2px solid #4f46e5;
+      background: #f9fafb;
+    }
+  </style>
+</head><body class="bg-gray-50 p-6">
+  <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-2xl p-6">
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-4">
+        <input type="file" accept="image/*" id="photoUpload" class="hidden" onchange="handleImageUpload(event)" />
+        <label for="photoUpload" class="cursor-pointer">
+          <img id="profileImage" src="https://via.placeholder.com/100" alt="Profile" class="w-24 h-24 rounded-full object-cover border" />
+        </label>
+        <div>
+          <h1 contenteditable="true" class="text-3xl font-bold editable">Your Name</h1>
+          <p contenteditable="true" class="text-gray-600 editable">Professional Title</p>
+        </div>
+      </div>
+    </div><div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <div>
+    <h2 class="text-xl font-semibold mb-2">Contact</h2>
+    <p contenteditable="true" class="editable text-gray-700">Email: you@example.com</p>
+    <p contenteditable="true" class="editable text-gray-700">Phone: 123-456-7890</p>
+    <p contenteditable="true" class="editable text-gray-700">LinkedIn: linkedin.com/in/you</p>
+  </div>
+
+  <div>
+    <h2 class="text-xl font-semibold mb-2">Personal Details</h2>
+    <p contenteditable="true" class="editable text-gray-700">Date of Birth: DD/MM/YYYY</p>
+    <p contenteditable="true" class="editable text-gray-700">Address: Your Address Here</p>
+    <p contenteditable="true" class="editable text-gray-700">Nationality: Your Nationality</p>
+  </div>
+</div>
+
+<div class="mt-6">
+  <h2 class="text-xl font-semibold mb-2">About You</h2>
+  <p contenteditable="true" class="editable text-gray-700">Write a brief personal statement or career summary...</p>
+</div>
+
+<div class="mt-6">
+  <h2 class="text-xl font-semibold mb-2">Skills</h2>
+  <ul class="list-disc ml-6 text-gray-700">
+    <li contenteditable="true" class="editable">HTML, CSS, JavaScript</li>
+    <li contenteditable="true" class="editable">React, Tailwind</li>
+    <li contenteditable="true" class="editable">Git, GitHub</li>
+  </ul>
+</div>
+
+<div class="mt-6">
+  <h2 class="text-xl font-semibold mb-2">Experience</h2>
+  <div class="space-y-2">
+    <div>
+      <h3 contenteditable="true" class="font-semibold editable">Company Name</h3>
+      <p contenteditable="true" class="editable text-gray-700">Role - Jan 2020 to Present</p>
+      <p contenteditable="true" class="editable text-gray-600">Describe your achievements and responsibilities.</p>
+    </div>
+  </div>
+</div>
+
+<div class="mt-6">
+  <h2 class="text-xl font-semibold mb-2">Education</h2>
+  <div>
+    <h3 contenteditable="true" class="font-semibold editable">University Name</h3>
+    <p contenteditable="true" class="editable text-gray-700">Degree, Field of Study - Year</p>
+    <p contenteditable="true" class="editable text-gray-700">Marks/Percentage: 85%</p>
+  </div>
+</div>
+
+<div class="mt-6">
+  <h2 class="text-xl font-semibold mb-2">Additional Notes</h2>
+  <textarea class="w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4" placeholder="Write anything else you want to include in your resume..."></textarea>
+</div>
+
+<div class="mt-6 text-right">
+  <button onclick="window.print()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Download as PDF</button>
+</div>
+
+  </div>  <script>
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          document.getElementById('profileImage').src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  </script></body></html>

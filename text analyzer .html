@@ -1,0 +1,119 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Text Analyzer</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f9fafb;
+    color: #1e293b;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+  }
+  h1 {
+    margin-bottom: 20px;
+    animation: fadeIn 1s forwards;
+  }
+  textarea {
+    width: 100%;
+    max-width: 600px;
+    height: 150px;
+    padding: 15px;
+    font-size: 1rem;
+    border-radius: 10px;
+    border: 1px solid #cbd5e1;
+    resize: vertical;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+    outline-color: #2563eb;
+    opacity: 0;
+    animation: fadeIn 1s 0.5s forwards;
+  }
+  button {
+    margin-top: 15px;
+    padding: 12px 30px;
+    font-size: 1rem;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s;
+    animation: fadeIn 1s 0.7s forwards;
+    opacity: 0;
+  }
+  button:hover {
+    background-color: #1d4ed8;
+    transform: scale(1.05);
+  }
+  #results {
+    margin-top: 25px;
+    background: white;
+    max-width: 600px;
+    width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    color: #334155;
+    opacity: 0;
+    animation: fadeIn 1s 1s forwards;
+  }
+  #results p {
+    margin: 8px 0;
+    font-size: 1.1rem;
+  }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(20px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+</style>
+</head>
+<body>
+  <h1>Text Analyzer</h1>
+  <textarea id="inputText" placeholder="Type or paste your text here..."></textarea>
+  <button id="analyzeBtn">Analyze Text</button>
+  <div id="results" style="display:none;">
+    <p><strong>Word Count:</strong> <span id="wordCount">0</span></p>
+    <p><strong>Character Count (with spaces):</strong> <span id="charCount">0</span></p>
+    <p><strong>Character Count (without spaces):</strong> <span id="charNoSpaces">0</span></p>
+    <p><strong>Sentence Count:</strong> <span id="sentenceCount">0</span></p>
+    <p><strong>Average Word Length:</strong> <span id="avgWordLength">0</span></p>
+  </div>
+
+<script>
+  const inputText = document.getElementById('inputText');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+  const results = document.getElementById('results');
+
+  analyzeBtn.addEventListener('click', () => {
+    const text = inputText.value.trim();
+
+    if (!text) {
+      alert('Please enter some text to analyze.');
+      return;
+    }
+
+    const words = text.match(/\b\w+\b/g) || [];
+    const wordCount = words.length;
+    const charCount = text.length;
+    const charNoSpaces = text.replace(/\s/g, '').length;
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const sentenceCount = sentences.length;
+    const avgWordLength = wordCount === 0 ? 0 :
+      (words.reduce((acc, w) => acc + w.length, 0) / wordCount).toFixed(2);
+
+    results.style.display = 'block';
+    document.getElementById('wordCount').textContent = wordCount;
+    document.getElementById('charCount').textContent = charCount;
+    document.getElementById('charNoSpaces').textContent = charNoSpaces;
+    document.getElementById('sentenceCount').textContent = sentenceCount;
+    document.getElementById('avgWordLength').textContent = avgWordLength;
+  });
+</script>
+</body>
+</html>

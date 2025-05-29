@@ -1,0 +1,217 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sardhan Maze</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #fdfbfb, #ebedee);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+    }
+    h1 {
+      color: #4c1d95;
+      margin-top: 20px;
+    }
+    canvas {
+      border: 4px solid #6d28d9;
+      margin-top: 20px;
+      background-color: #ffffff;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+    }
+    .controls {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: repeat(3, 60px);
+      gap: 10px;
+      justify-content: center;
+    }
+    .controls button {
+      padding: 15px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 50%;
+      background: #8b5cf6;
+      color: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .controls button:active {
+      transform: scale(0.9);
+      background: #6d28d9;
+    }
+    .bottom-controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .bottom-controls button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      background-color: #4f46e5;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+    .bottom-controls button:hover {
+      background-color: #4338ca;
+    }
+    @media (max-width: 600px) {
+      canvas {
+        width: 90vw;
+        height: 90vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Sardhan Maze - Level <span id="level">1</span></h1>
+  <canvas id="maze" width="300" height="300"></canvas>
+  <div class="controls">
+    <div></div><button onclick="move('up')">⬆️</button><div></div>
+    <button onclick="move('left')">⬅️</button><div></div><button onclick="move('right')">➡️</button>
+    <div></div><button onclick="move('down')">⬇️</button><div></div>
+  </div>
+  <div class="bottom-controls">
+    <button onclick="resetPlayer()">🔄 Reset</button>
+    <button onclick="nextLevel()">➡️ Next Level</button>
+  </div>
+  <script>
+    const canvas = document.getElementById("maze");
+    const ctx = canvas.getContext("2d");
+    const cellSize = 30;
+    let player = { x: 0, y: 0, drawX: 0, drawY: 0 };
+    let maze, rows, cols;
+    let level = 1;
+    const maxLevel = 100;function generateMaze(size) {
+  rows = cols = size;
+  maze = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+  // Simple depth-first maze generation
+  function carve(x, y) {
+    const dirs = shuffle([
+      [0, -1], [0, 1], [-1, 0], [1, 0]
+    ]);
+    for (const [dx, dy] of dirs) {
+      const nx = x + dx * 2;
+      const ny = y + dy * 2;
+      if (ny >= 0 && ny < rows && nx >= 0 && nx < cols && maze[ny][nx] === 0) {
+        maze[y + dy][x + dx] = 1;
+        maze[ny][nx] = 1;
+        carve(nx, ny);
+      }
+    }
+  }
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      maze[y][x] = 0;
+    }
+  }
+  maze[0][0] = 1;
+  carve(0, 0);
+  maze[rows - 1][cols - 1] = 1;
+  player = { x: 0, y: 0, drawX: 0, drawY: 0 };
+}
+
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function drawMaze() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      ctx.fillStyle = maze[y][x] === 1 ? "#ddd6fe" : "#1e1b4b";
+      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+    }
+  }
+  // Goal
+  ctx.fillStyle = "#22c55e";
+  ctx.beginPath();
+  ctx.arc((cols - 1) * cellSize + cellSize / 2, (rows - 1) * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Player
+  ctx.fillStyle = "#0ea5e9";
+  ctx.beginPath();
+  ctx.arc(player.drawX * cellSize + cellSize / 2, player.drawY * cellSize + cellSize / 2, cellSize / 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function animateMove(targetX, targetY) {
+  const dx = targetX - player.drawX;
+  const dy = targetY - player.drawY;
+  const steps = 5;
+  let step = 0;
+  const anim = setInterval(() => {
+    player.drawX += dx / steps;
+    player.drawY += dy / steps;
+    drawMaze();
+    step++;
+    if (step >= steps) {
+      clearInterval(anim);
+    }
+  }, 20);
+}
+
+function move(direction) {
+  let newX = player.x;
+  let newY = player.y;
+  if (direction === "up") newY--;
+  else if (direction === "down") newY++;
+  else if (direction === "left") newX--;
+  else if (direction === "right") newX++;
+
+  if (newX >= 0 && newX < cols && newY >= 0 && newY < rows && maze[newY][newX] === 1) {
+    player.x = newX;
+    player.y = newY;
+    animateMove(newX, newY);
+    checkWin();
+  }
+}
+
+function checkWin() {
+  if (player.x === cols - 1 && player.y === rows - 1) {
+    setTimeout(() => alert("🎉 Level " + level + " completed!"), 100);
+  }
+}
+
+function resetPlayer() {
+  player = { x: 0, y: 0, drawX: 0, drawY: 0 };
+  drawMaze();
+}
+
+function nextLevel() {
+  if (level < maxLevel) {
+    level++;
+    document.getElementById("level").textContent = level;
+    generateMaze(5 + Math.floor(level / 10));
+    drawMaze();
+  } else {
+    alert("🏁 You completed all 100 levels!");
+  }
+}
+
+generateMaze(5);
+drawMaze();
+
+  </script>
+</body>
+</html>

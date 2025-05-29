@@ -1,0 +1,261 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whiteboard with Shapes</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    .toolbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #f0f0f0;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 5px;
+      z-index: 10;
+    }
+    .toolbar input, .toolbar button, .toolbar select {
+      margin: 3px;
+      padding: 6px;
+      font-size: 16px;
+    }
+    canvas {
+      position: absolute;
+      top: 55px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 55px);
+      touch-action: none;
+      background: white;
+    }
+    #textInput {
+      position: absolute;
+      display: none;
+      background: transparent;
+      border: 1px dashed black;
+      color: black;
+      font: 18px sans-serif;
+      padding: 4px;
+      z-index: 20;
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar">
+  <select id="modeSelector">
+    <option value="pen">✏️ Pen</option>
+    <option value="text">🔤 Text</option>
+    <option value="bucket">🪣 Fill</option>
+    <option value="shape">🔲 Shape</option>
+  </select>
+  <select id="shapeType">
+    <option value="rect">Rectangle</option>
+    <option value="circle">Circle</option>
+  </select>
+  <input type="color" id="colorPicker" value="#000000">
+  <input type="range" id="brushSize" min="2" max="20" value="4">
+  <button onclick="undo()">Undo</button>
+  <button onclick="redo()">Redo</button>
+  <button onclick="clearCanvas()">Clear</button>
+  <button onclick="saveCanvas()">Save</button>
+</div>
+
+<canvas id="canvas"></canvas>
+<textarea id="textInput"></textarea>
+
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+
+  const modeSelector = document.getElementById("modeSelector");
+  const shapeType = document.getElementById("shapeType");
+  const colorPicker = document.getElementById("colorPicker");
+  const brushSize = document.getElementById("brushSize");
+  const textInput = document.getElementById("textInput");
+
+  let mode = "pen";
+  let paths = [];
+  let undonePaths = [];
+  let drawing = false;
+  let currentPath = [];
+  let startX = 0;
+  let startY = 0;
+  let previewShape = null;
+
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight - 55;
+    redraw();
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  modeSelector.onchange = () => mode = modeSelector.value;
+
+  function getTouchPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches[0] || e.changedTouches[0];
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+
+  canvas.addEventListener("touchstart", (e) => {
+    const { x, y } = getTouchPos(e);
+    startX = x;
+    startY = y;
+
+    if (mode === "pen") {
+      drawing = true;
+      currentPath = [{ x, y, color: colorPicker.value, size: brushSize.value }];
+    }
+  });
+
+  canvas.addEventListener("touchmove", (e) => {
+    if (mode === "pen" && drawing) {
+      const { x, y } = getTouchPos(e);
+      currentPath.push({ x, y, color: colorPicker.value, size: brushSize.value });
+      redraw();
+    }
+
+    if (mode === "shape") {
+      const { x, y } = getTouchPos(e);
+      previewShape = { type: shapeType.value, x1: startX, y1: startY, x2: x, y2: y, color: colorPicker.value, size: brushSize.value };
+      redraw();
+    }
+  });
+
+  canvas.addEventListener("touchend", (e) => {
+    const { x, y } = getTouchPos(e);
+
+    if (mode === "pen" && currentPath.length > 0) {
+      drawing = false;
+      paths.push(currentPath);
+      undonePaths = [];
+    }
+
+    if (mode === "text") {
+      textInput.style.left = `${x}px`;
+      textInput.style.top = `${y + 55}px`;
+      textInput.style.fontSize = `${brushSize.value * 4}px`;
+      textInput.style.color = colorPicker.value;
+      textInput.value = "";
+      textInput.style.display = "block";
+      textInput.focus();
+
+      textInput.onblur = () => {
+        const text = textInput.value.trim();
+        if (text) {
+          ctx.font = `${brushSize.value * 4}px sans-serif`;
+          ctx.fillStyle = colorPicker.value;
+          ctx.fillText(text, x, y);
+          paths.push([{ type: "text", x, y, text, size: brushSize.value, color: colorPicker.value }]);
+        }
+        textInput.style.display = "none";
+        mode = "pen";
+        modeSelector.value = "pen";
+      };
+    }
+
+    if (mode === "bucket") {
+      canvas.style.backgroundColor = colorPicker.value;
+      paths.push([{ type: "fill", color: colorPicker.value }]);
+      mode = "pen";
+      modeSelector.value = "pen";
+    }
+
+    if (mode === "shape" && previewShape) {
+      paths.push([previewShape]);
+      previewShape = null;
+      redraw();
+    }
+  });
+
+  function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.backgroundColor = "white";
+
+    for (let path of paths) {
+      drawPath(path);
+    }
+
+    if (drawing && currentPath.length > 1) drawPath(currentPath);
+
+    if (previewShape) drawPath([previewShape]);
+  }
+
+  function drawPath(path) {
+    const item = path[0];
+    if (item.type === "fill") {
+      canvas.style.backgroundColor = item.color;
+    } else if (item.type === "text") {
+      ctx.font = `${item.size * 4}px sans-serif`;
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.text, item.x, item.y);
+    } else if (item.type === "rect") {
+      const { x1, y1, x2, y2, color, size } = item;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    } else if (item.type === "circle") {
+      const { x1, y1, x2, y2, color, size } = item;
+      const centerX = (x1 + x2) / 2;
+      const centerY = (y1 + y2) / 2;
+      const radius = Math.sqrt(Math.pow((x2 - x1) / 2, 2) + Math.pow((y2 - y1) / 2, 2));
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      for (let i = 0; i < path.length; i++) {
+        const p = path[i];
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = p.size;
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  function undo() {
+    if (paths.length > 0) {
+      undonePaths.push(paths.pop());
+      redraw();
+    }
+  }
+
+  function redo() {
+    if (undonePaths.length > 0) {
+      paths.push(undonePaths.pop());
+      redraw();
+    }
+  }
+
+  function clearCanvas() {
+    paths = [];
+    undonePaths = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvas.style.backgroundColor = "white";
+  }
+
+  function saveCanvas() {
+    const link = document.createElement("a");
+    link.download = "whiteboard.png";
+    link.href = canvas.toDataURL();
+    link.click();
+  }
+</script>
+</body>
+</html>

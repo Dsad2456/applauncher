@@ -1,0 +1,232 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!-- Full updated HTML with world clocks for Delhi, Bangalore, and Hyderabad --><!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sardhan Clock</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fef9ff;
+      color: #1e1e1e;
+    }
+    header {
+      background: #6d28d9;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      background: #ede9fe;
+      padding: 0.5rem;
+      border-top: 2px solid #c4b5fd;
+    }
+    nav a {
+      text-decoration: none;
+      color: #4c1d95;
+      font-weight: bold;
+      padding: 0.5rem;
+    }
+    .page {
+      display: none;
+      padding: 2rem;
+    }
+    .active {
+      display: block;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    }
+    input, select, button {
+      padding: 0.6rem;
+      margin: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    button {
+      background: #7c3aed;
+      color: white;
+      border: none;
+    }
+    .display {
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    @media (max-width: 600px) {
+      .display {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>Sardhan Clock</header>
+  <nav>
+    <a href="#normal">Clock</a>
+    <a href="#alarm">Alarm</a>
+    <a href="#world">World Clock</a>
+    <a href="#stopwatch">Stopwatch</a>
+    <a href="#timer">Timer</a>
+  </nav>  <div id="normal" class="page">
+    <div class="card">
+      <h3>Current Time</h3>
+      <div class="display" id="normalClock">--:--:--</div>
+    </div>
+  </div>  <div id="alarm" class="page">
+    <div class="card">
+      <h3>Set Alarm</h3>
+      <input type="time" id="alarmTime" />
+      <input type="text" id="alarmLabel" placeholder="Label" />
+      <button onclick="setAlarm()">Set Alarm</button>
+      <p id="alarmStatus"></p>
+    </div>
+  </div>  <div id="world" class="page">
+    <div class="card">
+      <h3>World Clock</h3>
+      <ul id="worldClocks"></ul>
+    </div>
+  </div>  <div id="stopwatch" class="page">
+    <div class="card">
+      <h3>Stopwatch</h3>
+      <div class="display" id="stopwatchDisplay">00:00:00</div>
+      <button onclick="startStopwatch()">Start</button>
+      <button onclick="stopStopwatch()">Stop</button>
+      <button onclick="resetStopwatch()">Reset</button>
+    </div>
+  </div>  <div id="timer" class="page">
+    <div class="card">
+      <h3>Timer</h3>
+      <input type="number" id="timerInput" placeholder="Seconds" />
+      <div class="display" id="timerDisplay">00:00</div>
+      <button onclick="startTimer()">Start</button>
+      <button onclick="resetTimer()">Reset</button>
+    </div>
+  </div>  <audio id="alarmSound" preload="auto">
+    <source src="https://cdn.pixabay.com/audio/2022/03/15/audio_0b768d1e4b.mp3" type="audio/mpeg">
+  </audio>  <script>
+    function showPage(pageId) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(pageId).classList.add('active');
+    }
+    window.addEventListener('hashchange', () => {
+      const page = location.hash.substring(1) || 'alarm';
+      showPage(page);
+    });
+    showPage(location.hash.substring(1) || 'alarm');
+
+    // NORMAL CLOCK
+    function updateNormalClock() {
+      const now = new Date();
+      document.getElementById('normalClock').textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateNormalClock, 1000);
+    updateNormalClock();
+
+    // ALARM
+    function setAlarm() {
+      const time = document.getElementById('alarmTime').value;
+      const label = document.getElementById('alarmLabel').value;
+      if (!time) return alert('Set a time!');
+      const [hours, minutes] = time.split(':');
+      const interval = setInterval(() => {
+        const now = new Date();
+        if (now.getHours() == hours && now.getMinutes() == minutes && now.getSeconds() === 0) {
+          document.getElementById('alarmSound').play();
+          document.getElementById('alarmStatus').textContent = `\u23f0 ${label || 'Alarm'} ringing!`;
+          clearInterval(interval);
+        }
+      }, 1000);
+      document.getElementById('alarmStatus').textContent = `\u2714 Alarm set for ${time}`;
+    }
+
+    const cities = [
+      { name: 'New York', offset: -4 },
+      { name: 'London', offset: 0 },
+      { name: 'Tokyo', offset: 9 },
+      { name: 'Sydney', offset: 10 },
+      { name: 'Delhi', offset: 5.5 },
+      { name: 'Bangalore', offset: 5.5 },
+      { name: 'Hyderabad', offset: 5.5 },
+    ];
+    function updateWorldClocks() {
+      const list = document.getElementById('worldClocks');
+      list.innerHTML = '';
+      const now = new Date();
+      cities.forEach(city => {
+        const local = new Date(now.getTime() + city.offset * 3600000);
+        const li = document.createElement('li');
+        li.textContent = `${city.name}: ${local.toUTCString().slice(17, 25)}`;
+        list.appendChild(li);
+      });
+    }
+    setInterval(updateWorldClocks, 1000);
+    updateWorldClocks();
+
+    let stopwatchSeconds = 0, stopwatchInterval;
+    function updateStopwatch() {
+      const hrs = String(Math.floor(stopwatchSeconds / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((stopwatchSeconds % 3600) / 60)).padStart(2, '0');
+      const secs = String(stopwatchSeconds % 60).padStart(2, '0');
+      document.getElementById('stopwatchDisplay').textContent = `${hrs}:${mins}:${secs}`;
+    }
+    function startStopwatch() {
+      if (!stopwatchInterval) {
+        stopwatchInterval = setInterval(() => {
+          stopwatchSeconds++;
+          updateStopwatch();
+        }, 1000);
+      }
+    }
+    function stopStopwatch() {
+      clearInterval(stopwatchInterval);
+      stopwatchInterval = null;
+    }
+    function resetStopwatch() {
+      stopwatchSeconds = 0;
+      updateStopwatch();
+    }
+    updateStopwatch();
+
+    let timerRemaining = 0, timerInterval;
+    function updateTimer() {
+      const mins = String(Math.floor(timerRemaining / 60)).padStart(2, '0');
+      const secs = String(timerRemaining % 60).padStart(2, '0');
+      document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+    }
+    function startTimer() {
+      const input = parseInt(document.getElementById('timerInput').value, 10);
+      if (isNaN(input) || input <= 0) return;
+      timerRemaining = input;
+      clearInterval(timerInterval);
+      updateTimer();
+      timerInterval = setInterval(() => {
+        timerRemaining--;
+        updateTimer();
+        if (timerRemaining <= 0) {
+          clearInterval(timerInterval);
+          document.getElementById('alarmSound').play();
+        }
+      }, 1000);
+    }
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timerRemaining = 0;
+      updateTimer();
+    }
+    updateTimer();
+  </script></body>
+</html>
